@@ -16,12 +16,13 @@ strategy on historical data.
 
 ## Project structure
 
-| File | Description |
-|---|---|
-| `essai.py` | First test: downloads and displays 3 months of AAPL prices |
-| `gap.py` | Cleans the data and computes daily gaps for one stock |
-| `scanner.py` | Scans a list of tickers and returns the gaps that pass the filters |
-| `backtest.py` | Simulates trades on 2 years of data and prints statistics |
+| File              | Description |
+|---                |---|
+| `essai.py`        | First test: downloads and displays 3 months of AAPL prices |
+| `gap.py`          | Cleans the data and computes daily gaps for one stock |
+| `scanner.py`      | Scans a list of tickers and returns the gaps that pass the filters |
+| `backtest.py`     | Simulates trades on 2 years of data and prints statistics |
+| `optimisation.py` | Add parameter optimization with train/test split
 
 ## Installation
 
@@ -91,7 +92,7 @@ overfitting.
 - [x] Download price data
 - [x] Gap scanner
 - [x] Basic backtest
-- [ ] Test different stop-loss levels, with a train/test split to avoid overfitting
+- [x] Test different stop-loss levels, with a train/test split to avoid overfitting
 - [ ] Add commissions and position sizing
 - [ ] Intraday data (1–5 minute bars)
 - [ ] News and sentiment analysis with AI
