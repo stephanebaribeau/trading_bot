@@ -94,8 +94,8 @@ overfitting.
 - [x] Basic backtest
 - [x] Test different stop-loss levels, with a train/test split to avoid overfitting
 - [x] Test the "gap fade" strategy (short the gap, expecting it to fill)
-- [ ] Add commissions and position sizing
-- [ ] Intraday data (1–5 minute bars)
+- [x] Add commissions and position sizing
+- [x] Intraday data (1–5 minute bars)
 - [ ] News and sentiment analysis with AI
 - [ ] Paper trading with a broker API
 

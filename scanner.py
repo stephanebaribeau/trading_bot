@@ -29,11 +29,11 @@ def passe_les_filtres(ligne):
             and ligne["volume_moyen"] >= VOLUME_MIN
             )
 
-def telecharger(tickers, periode):
+def telecharger(tickers, periode, intervalle="1d"):
     """ Télécharge les prix quotidiwns en masquant les avertissements de pandas """
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=pd.errors.Pandas4Warning)
-        return yf.download(tickers, period=periode, interval="1d", group_by="ticker", progress=False)
+        return yf.download(tickers, period=periode, interval=intervalle, group_by="ticker", progress=False)
 
 if __name__ == "__main__":
     brut = yf.download(TICKERS, period="6mo", interval="1d", group_by="ticker", progress=False)
