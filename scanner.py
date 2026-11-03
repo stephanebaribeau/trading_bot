@@ -1,5 +1,6 @@
 import yfinance as yf
 import pandas as pd
+import warnings
 
 TICKERS = ["AAPL", "NVDA", "AMD", "TSLA", "META", "PLTR", "COIN", "MU", "SOFI", "MARA", "RIVN", "SNAP", "UBER", "SHOP", "NFLX"]
 
@@ -7,6 +8,8 @@ GAP_MIN = 3.0  # au moins +3%
 GAP_MAX = 15.0 # au plus +15%
 PRIX_MIN = 5.0  # pas de penny stock
 VOLUME_MIN = 1_000_000
+
+warnings.filterwarnings("ignore", message=".*inplace keywords.*")
 
 def preparer(df):
     df = df.copy()
