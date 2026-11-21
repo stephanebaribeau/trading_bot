@@ -9,10 +9,15 @@ and every parameter choice validated on unseen data.
 
 ## Key finding
 
-Four strategy families were tested on 15 large US stocks over 5 years.
-**None of them showed a real edge** once tested on unseen data.
-The most valuable output of this project is the testing framework itself,
-which caught several results that looked profitable but were only luck.
+Four strategy families based on price alone were tested on 15 large US stocks
+over 5 years. **None of them showed a real edge** once tested on unseen data.
+
+Adding pre-market news changed the picture: Opening Range Breakout trades on
+days with an **analyst downgrade or price target cut** were positive in
+training, in testing, and in every single year from 2021 to 2026
+(+0.126R per trade over 502 trades). This result was discovered, not predicted,
+so it is now being validated on new data through paper trading
+(see [Pre-registered strategy](#pre-registered-strategy-forward-test)).
 
 ## Project structure
 
@@ -32,6 +37,12 @@ which caught several results that looked profitable but were only luck.
 | `donnees_alpaca.py` | Downloads 5 years of 5-minute bars from Alpaca, with a local CSV cache |
 | `orb_alpaca.py` | ORB backtest on 5 years of data, with a train/test split and yearly results |
 | `orb_pistes.py` | Tests two ORB variants: a 5-minute opening range and a relative volume filter |
+| `nouvelles_test.py` | First look at Alpaca news: timing, number of symbols per article |
+| `donnees_nouvelles.py` | Downloads 5 years of news from Alpaca (Benzinga), with a local CSV cache |
+| `orb_nouvelles.py` | ORB results by number of pre-market news articles |
+| `categories.py` | Keyword-based news classifier, with a sample check of each category |
+| `orb_categories.py` | ORB results by news category |
+| `verif_baisse.py` | Robustness checks on the analyst downgrade result |
 
 ## Installation
 
@@ -124,6 +135,84 @@ and the volume threshold (2x the 20-day average) was fixed in advance.
 - Best combination in testing: **-0.012R** (284 trades). It does not hold.
 - The volume filter helped only with the 5-minute range, which suggests chance.
 
+### 5. News before the open
+
+For each trading day, only **targeted** news (2 symbols or fewer) published
+between 4 p.m. the previous trading day and 9:30 a.m. were used. News published
+during the session often describes price moves instead of causing them.
+
+**Number of news articles: no effect.** Days with 0, 1–2, or 3+ articles all
+showed about -0.005R in training.
+
+**News category: a clear difference.** Headlines were classified with keyword
+rules, checked on random samples, then frozen before looking at trading results.
+
+| Category | Train trades | Train expectancy | Test trades | Test expectancy |
+|---|---|---|---|---|
+| No news (reference) | 5,699 | -0.003R | 2,303 | -0.030R |
+| **Analyst downgrade / price target cut** | 373 | **+0.114R** | 129 | **+0.159R** |
+| Earnings results | 230 | +0.076R | 101 | +0.051R |
+| Neutral analyst action | 323 | +0.035R | 159 | -0.092R |
+| Analyst upgrade / price target raise | 580 | +0.011R | 234 | -0.071R |
+| Other news | 3,567 | -0.018R | 2,017 | -0.071R |
+
+The initial hypothesis was the **opposite**: upgrades were expected to help
+a long breakout, and downgrades to hurt it.
+
+### 6. Robustness checks on the downgrade result
+
+- **By year**: positive in all 6 years (from +0.074R in 2024 to +0.208R in 2023).
+- **By ticker**: 10 of 15 tickers positive. Still +0.08R per trade after
+  removing the three best tickers.
+- **Not driven by earnings**: +0.136R on the 421 downgrade days without earnings news.
+- **By gap direction**: gap down +0.151R, flat +0.165R, gap up +0.026R.
+  Gap-up days are weak, consistent with the failed "gap and go" strategy.
+
+## Pre-registered strategy (forward test)
+
+**Registered on November 21, 2026, before any forward test trade.**
+These rules are frozen. Any change will be recorded below as a new version,
+and its results will be counted separately.
+
+### Rules (version 1)
+
+1. **Universe**: AAPL, NVDA, AMD, TSLA, META, PLTR, COIN, MU, SOFI, MARA,
+   RIVN, SNAP, UBER, SHOP, NFLX.
+2. **News filter**: at least one Alpaca/Benzinga article mentioning 2 symbols
+   or fewer, published between 4:00 p.m. ET the previous trading day and
+   9:30 a.m. ET, whose headline matches `\bdowngrade[sd]?\b|lowers price target`
+   (option alerts excluded), as defined in `categories.py`.
+3. **Opening range**: high and low of the first 15 minutes (9:30 to 9:45 a.m. ET).
+4. **Entry**: buy when the price breaks above the opening range high,
+   from 9:45 a.m. onward. Long only, one trade per stock per day.
+5. **Stop**: the opening range low.
+6. **Exit**: at the stop, or at the market close.
+7. **Position size**: risk 1% of the account per trade, with a maximum
+   position of 25% of the account.
+8. **No other filter.** In particular, gap-up days are **not** excluded,
+   even though they were weak in the backtest. This idea may be tested
+   later as a separate hypothesis.
+
+### Backtest reference
+
+| | Trades | Expectancy |
+|---|---|---|
+| Train (2021–2024) | 373 | +0.114R |
+| Test (2025–2026) | 129 | +0.159R |
+| All years | 502 | +0.126R |
+
+About 85 trades per year are expected.
+
+### Evaluation plan
+
+- **First 3 months**: check the execution only. Do orders fill as expected?
+  Is the real slippage close to the 0.05% per side assumed in the backtest?
+  About 20 trades are expected: far too few to judge the strategy.
+- **Decision after at least 80 forward trades** (about one year):
+  - expectancy after commissions **above 0**: the strategy passes the forward test;
+  - expectancy **below 0**: the strategy is rejected.
+- No real money before the forward test is passed.
+- 
 ## Pitfalls handled
 
 - **Lookahead bias**: indicators use only past data (`shift(1)` before rolling
@@ -156,8 +245,12 @@ and the volume threshold (2x the 20-day average) was fixed in advance.
 - [x] Intraday data (5-minute bars) and Opening Range Breakout
 - [x] 5 years of intraday history with Alpaca
 - [x] ORB variants: 5-minute range and relative volume filter
-- [ ] News and sentiment analysis with AI
-- [ ] Paper trading with the Alpaca API
+- [x] News data and keyword classification
+- [x] Robustness checks on the analyst downgrade result
+- [x] Pre-registration of the strategy rules
+- [ ] Paper trading bot with the Alpaca API
+- [ ] Forward test evaluation (at least 80 trades)
+- [ ] AI news classification (compare with keyword rules)
 
 ## Disclaimer
 

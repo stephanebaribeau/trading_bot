@@ -5,3 +5,4 @@ __pycache__/
 .env1/
 .vs/
 .env
+data_alpaca/
