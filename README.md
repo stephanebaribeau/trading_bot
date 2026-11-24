@@ -43,6 +43,10 @@ so it is now being validated on new data through paper trading
 | `categories.py` | Keyword-based news classifier, with a sample check of each category |
 | `orb_categories.py` | ORB results by news category |
 | `verif_baisse.py` | Robustness checks on the analyst downgrade result |
+| `paper_test.py` | Connection test for the Alpaca paper trading account: account, clock, test order |
+| `test_oto.py` | Checks that Alpaca accepts an OTO order with a stop entry |
+| `bot.py` | Paper trading bot that runs the pre-registered strategy each trading day |
+| `tout_fermer.py` | Emergency script: cancels all orders and closes all positions |
 
 ## Installation
 
@@ -174,6 +178,52 @@ a long breakout, and downgrades to hurt it.
 These rules are frozen. Any change will be recorded below as a new version,
 and its results will be counted separately.
 
+
+## Paper trading bot
+
+`bot.py` runs the pre-registered strategy on an Alpaca **paper** account
+(simulated money). It is started each trading day before 9:46 a.m. ET and
+stays open until the close.
+
+1. Checks the Alpaca market calendar (holidays, early closes).
+2. Waits until 9:46 a.m. ET, one minute after the opening range is complete.
+3. Finds targeted analyst downgrade news published between 4 p.m. the previous
+   trading day and 9:30 a.m.
+4. For each candidate, computes the opening range and the position size,
+   then sends one **OTO order**: a buy stop above the range high, which
+   triggers a stop-loss at the range low once filled.
+5. Five minutes before the actual close, cancels all orders and closes
+   all positions.
+6. Logs every event in `journal_paper.csv`.
+
+```bash
+python bot.py               # normal run
+python bot.py --test AAPL   # forces a 1-share trade on AAPL, without the news filter
+python tout_fermer.py       # emergency: cancel all orders and close all positions
+```
+
+### Implementation notes
+
+Added on November 23, 2026, before the first forward test trade.
+These notes describe how the frozen rules are executed. They do not change them.
+
+- **Live data feed**: the free Alpaca plan only provides real-time data from
+  the IEX exchange. The live opening range is computed from IEX bars, while
+  the backtest used consolidated (SIP) data. The range high and low may differ
+  by a few cents.
+- **Entry price**: the buy stop is placed $0.01 above the range high, matching
+  the backtest rule "price strictly above the high". If the price is already
+  above the high at 9:46 a.m., the bot buys at market, like the backtest
+  entering at the bar's open.
+- **Early closes**: positions are closed 5 minutes before the actual close
+  from the Alpaca calendar (12:55 p.m. on 1 p.m. early-close days).
+- **Position cap**: the 25% maximum position size often applies before the 1%
+  risk limit on stocks with a narrow opening range. Results are measured in R,
+  so this does not change the expectancy, only the dollar amounts.
+- **No leverage**: position sizes are based on account equity, never on the
+  margin buying power offered by the broker.
+
+
 ### Rules (version 1)
 
 1. **Universe**: AAPL, NVDA, AMD, TSLA, META, PLTR, COIN, MU, SOFI, MARA,
@@ -248,7 +298,7 @@ About 85 trades per year are expected.
 - [x] News data and keyword classification
 - [x] Robustness checks on the analyst downgrade result
 - [x] Pre-registration of the strategy rules
-- [ ] Paper trading bot with the Alpaca API
+- [x] Paper trading bot with the Alpaca API
 - [ ] Forward test evaluation (at least 80 trades)
 - [ ] AI news classification (compare with keyword rules)
 

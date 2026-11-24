@@ -6,3 +6,4 @@ __pycache__/
 .vs/
 .env
 data_alpaca/
+journal_paper.csv
