@@ -112,12 +112,12 @@ def nombre_actions(valeur_compte, haut, bas):
 
 def placer_ordre(ticker, haut, bas, quantite):
     """ Ordre OTO : achat à la cassure du haut, puis stop de protection au bas. """
-    stop_loss = StopLossRequest(stop_price=round(basd, 2))
+    stop_loss = StopLossRequest(stop_price=round(bas, 2))
     dernier = client_prix.get_stock_latest_trade(StockLatestTradeRequest(symbol_or_symbols=ticker, feed=DataFeed.IEX))[ticker].price
 
     if dernier > haut:
         ordre = MarketOrderRequest(symbol=ticker, qty=quantite, side=OrderSide.BUY, time_in_force=TimeInForce.DAY, order_class=OrderClass.OTO, stop_loss=stop_loss)
-        entre = f"au marché (prix {dernier:.2f} déjà au-dessus)"
+        entree = f"au marché (prix {dernier:.2f} déjà au-dessus)"
     else:
         ordre = StopOrderRequest(symbol=ticker, qty=quantite,side=OrderSide.BUY,time_in_force=TimeInForce.DAY,stop_price=round(haut + 0.01, 2),order_class=OrderClass.OTO, stop_loss=stop_loss)
         entree = f"stop à {haut + 0.01:.2f}"
@@ -173,7 +173,7 @@ def main():
         return
 
     attendre_jusqua(fermeture - timedelta(minutes=5))
-    trading.close_all_positions(cancel_ordres=True)
+    trading.close_all_positions(cancel_orders=True)
     journal("fermeture", details="ordres annulés, positions vendues")
 
 
