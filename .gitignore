@@ -7,3 +7,4 @@ __pycache__/
 .env
 data_alpaca/
 journal_paper.csv
+lancer_bot.bat
